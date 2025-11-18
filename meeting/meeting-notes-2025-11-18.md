@@ -110,7 +110,7 @@ CASBE is a backend-for-frontend. Do we need new endpoints?
   - **Option C:** Re-authenticate with Auth service
 
 3. **Frontend Business Logic**
-  - Do we need to replicate the business logic in existing FE apps in the new ones **SASUI (CAS1, CAS3)**, **FMUI (CAS1)** Copy and pasting contracts sounds a terible idea --Stuart
+  - Do we need to replicate the business logic in existing FE apps in the new ones **SASUI (CAS1, CAS3)**, **FMUI (CAS1)** Copy and pasting contracts sounds a terrible idea --Stuart
 
 ### Key Considerations
 
