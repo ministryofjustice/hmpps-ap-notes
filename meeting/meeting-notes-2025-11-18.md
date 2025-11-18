@@ -104,13 +104,13 @@ CASBE is a backend-for-frontend. Do we need new endpoints?
     , Batch requests (`?ids=1,2,3`)
 
 2. **How do we authenticate with CASBE?**
-  , Kotlin backend has already validated the user's JWT token
-  , **Option A:** Relay the original JWT token to CASBE
-  , **Option B:** Use service-to-service authentication (client credentials)
-  , **Option C:** Re-authenticate with Auth service
+  - Kotlin backend has already validated the user's JWT token
+  - **Option A:** Relay the original JWT token to CASBE
+  - **Option B:** Use service-to-service authentication (client credentials)
+  - **Option C:** Re-authenticate with Auth service
 
 3. **Frontend Business Logic**
-  , Do we need to replicate the business logic in existing FE apps in the new ones **SASUI (CAS1, CAS3)**, **FMUI (CAS1)** Copy and pasting contracts sounds a terible idea --Stuart
+  - Do we need to replicate the business logic in existing FE apps in the new ones **SASUI (CAS1, CAS3)**, **FMUI (CAS1)** Copy and pasting contracts sounds a terible idea --Stuart
 
 ### Key Considerations
 
@@ -157,14 +157,14 @@ sequenceDiagram
 ### Decision Points
 
 1. **How does CASBE validate roles?**
-  , **Option A:** CASBE validates the same JWT token (requires same role structure)
-  , **Option B:** CASBE uses different validation logic per app it serves
-  , **Option C:** Service-to-service auth with role mapping
+  - **Option A:** CASBE validates the same JWT token (requires same role structure)
+  - **Option B:** CASBE uses different validation logic per app it serves
+  - **Option C:** Service-to-service auth with role mapping
 
 2. **Role Mapping Strategy**
-  , Can Auth app issue tokens with multiple roles?
-  , Does CASBE need to map roles from Auth app to its own role system?
-  , How do we handle role conflicts between apps?
+  - Can Auth app issue tokens with multiple roles?
+  - Does CASBE need to map roles from Auth app to its own role system?
+  - How do we handle role conflicts between apps?
 
 ### Key Considerations
 
