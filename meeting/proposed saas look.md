@@ -14,7 +14,7 @@ graph TD
     
     ADDRESS_SERVICE --> Phase1[Phase 1: Shim to existing system]
     ADDRESS_SERVICE --> Phase2[Phase 2: Address Data]
-```ADDRESS_SERVICE --> Phase2[Phase 2: Address Data]
+    ADDRESS_SERVICE --> Phase2[Phase 2: Address Data]
 ```
 
 PROBATION_SERVICE return say a list of crns, and staffProfileIds, from a teamId
