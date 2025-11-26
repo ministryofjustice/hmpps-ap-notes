@@ -13,7 +13,7 @@ This document outlines the three critical issues that were discussed in the FM U
 The **Kotlin backend** serves as an aggregation layer, collecting data from various sources (including **CASBE**) and presenting it to the **frontend**.
 
 ### System Architecture
-
+  
 ```mermaid
 graph TB
     TS[TS Frontend]
