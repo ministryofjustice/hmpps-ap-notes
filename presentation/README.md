@@ -6,6 +6,18 @@ This document outlines the development progress up to the March release. Develop
 
 ![Markdown Logo](christmas-2025.png "Christmas 2025")
 
+**Diagram Description:**
+This architecture diagram shows the backend system state at Christmas 2025. The system consists of:
+- **SAS UI** (TypeScript): The user interface service that makes HTTP calls to SAS APIs
+- **SAS Service** (Kotlin): The core backend service that handles business logic and coordinates with external services
+- **Redis Cache**: Used by SAS Service for read/write caching operations
+- **MOJ Services**: External component providing MOJ APIs consumed by SAS Service
+
+**Key Context:**
+- The application only uses a fixed set of CRNs (not yet filtered by logged-in user)
+- The UI has started rendering data from dev services for both macro tracker and micro tracker
+- Environment: DEV only
+
 **Current State:**
 - Macro Tracker: Renders data
 - Micro Tracker: Renders minimal data, including referral histories (excluding DTR and CRS)
@@ -14,6 +26,20 @@ This document outlines the development progress up to the March release. Develop
 
 ![Markdown Logo](agg1-christmas-2025.png "Aggregator phase 1")
 
+**Diagram Description:**
+This diagram illustrates the Aggregator component architecture in Phase 1. The flow shows:
+- **SAS Service** (Kotlin) invokes the Aggregator to "Get Request Data"
+- **Aggregator** makes concurrent HTTP calls to **MOJ Services** via MOJ APIs
+- **Aggregator** performs read/write operations with **Redis Cache** for caching
+
+**Supported Features:**
+- Calls are made concurrently and non-blocking (super fast)
+- Calls can be cached and reused, with different rules applied per call
+
+**Features Not Supported:**
+- Error handling does not support partial results
+- Retry and timeout policies are not supported per API call
+
 **Status:** In place and pulling real data (not yet filtered by logged-in user).
 
 **Purpose:** Enables multiple asynchronous API calls simultaneously. Supports concurrency but lacks validation, error handling, and resilience. Works only in happy-path scenarios.
@@ -21,6 +47,21 @@ This document outlines the development progress up to the March release. Develop
 ### Eligibility Rules Engine Phase 1
 
 ![Markdown Logo](rules1-christmas-2025.png "Eligibility Rules Engine Phase 1")
+
+**Diagram Description:**
+This diagram shows the Eligibility Rules Engine Phase 1 architecture and data flow:
+- **Browser** makes HTTP calls to **SAS Service** (Kotlin)
+- **SAS Service** invokes the **Eligibility Rules Engine** to "Process Eligibility"
+- **Aggregator** invokes the **Eligibility Rules Engine** to "Get Case Data"
+
+**Key Features:**
+- This is part of the SAS Service (integrated component)
+- Supports CAS1 rules; everything else is mocked (pretend data)
+- Runs on demand; data is pulled for every single case
+
+**Features Not Supported:**
+- CAS3, CAS2, DTR (Non-standard interventions), and CRS are not supported
+- Needs to run on events and store results in a local database (not yet implemented)
 
 **Status:** Successfully processing CAS1 rules. Viable for micro tracker, not macro tracker.
 
@@ -38,11 +79,42 @@ This document outlines the development progress up to the March release. Develop
 
 ![Markdown Logo](arch-january-2026.png "January 31st")
 
+**Diagram Description:**
+This architecture diagram shows the expanded system state for January 31st, 2026. The system now includes:
+- **SAS UI** (TypeScript): Makes HTTP calls to SAS APIs
+- **SAS Service** (Kotlin): Core service with read/write access to multiple databases
+- **Redis Cache**: Used by both SAS Service and MOJ Services for caching
+- **MOJ Services**: External component providing MOJ APIs
+- **PostgreSQL ReferenceDB**: New database for reference data storage
+- **PostgreSQL AccommodationDB**: New database for accommodation data storage
+- **Accommodation Service** (Kotlin): New service shown but explicitly noted as "not attached" to the main system flow
+
+**Key Context:**
+- Application should get CRNs from the probation integration service
+- All infrastructure is in place
+- UI should now be functional but some data will be mocked
+- Accommodation service is not yet attached to the main system
+- Environments: DEV, PRE PROD, PROD
+
 **Target State:** Infrastructure should be taking shape. UI functional with mix of real and mock data. May be missing proposed accommodations and/or DTR entry. Accommodation service added.
 
 ### Aggregator Phase 1.5
 
 ![Markdown Logo](agg1-6-january-2026.png "January 31st")
+
+**Diagram Description:**
+This diagram shows the Aggregator Phase 1.5 improvements. The architecture remains similar to Phase 1:
+- **SAS Service** (Kotlin) invokes the Aggregator to "Get Request Data"
+- **Aggregator** makes HTTP calls to **MOJ Services** via MOJ APIs
+- **Aggregator** performs read/write operations with **Redis Cache**
+
+**Supported Features:**
+- Calls are made concurrently and non-blocking (super fast)
+- Calls can be cached and reused, with different rules applied per call
+- Error handling now supports partial results (new in Phase 1.5)
+
+**Features Not Supported:**
+- Retry and timeout policies are still not supported per API call
 
 **Target:** Support graceful error handling and partial completions.
 
@@ -62,6 +134,24 @@ This document outlines the development progress up to the March release. Develop
 
 ![Markdown Logo](arch-February.png "February 28th")
 
+**Diagram Description:**
+This architecture diagram shows the complete system state for February 28th, 2026. The full infrastructure is now in place:
+- **SAS UI** (TypeScript): Makes HTTP calls to SAS APIs
+- **SAS Service** (Kotlin): Core service with full integration
+- **Accommodation Service** (Kotlin): Now fully attached and integrated into the system
+- **Redis Cache**: Used by SAS Service for caching
+- **PostgreSQL ReferenceDB**: Stores reference data and rules results
+- **PostgreSQL AccommodationDB**: Stores accommodation data (address, proposed accommodation, next accommodation)
+- **MOJ Services**: External component providing MOJ APIs
+- **MOJEvents (SNS/SQS)**: Message queue for event-driven communication
+  - Accommodation Service publishes `WriteEvent` messages
+  - Both SAS Service and Accommodation Service consume `ReadEvent` messages
+
+**Key Context:**
+- Application retrieves CRNs from probation integration service
+- Accommodation Service handles address data (from Delius), proposed accommodation, and next accommodation
+- Full event-driven architecture with MOJEvents message queue
+
 **Target State:** 
 - Application retrieves CRNs from probation integration service
 - All infrastructure in place
@@ -72,6 +162,21 @@ This document outlines the development progress up to the March release. Develop
 ### Aggregator Phase 2
 
 ![Markdown Logo](agg-february.png "February 28th")
+
+**Diagram Description:**
+This diagram shows the Aggregator Phase 2 MVP with complete feature set. The architecture includes:
+- **SAS Service** (Kotlin): Invokes the Cache and coordinates with Aggregator
+- **Aggregator**: Central component that orchestrates API calls
+  - Invoked by SAS Service to "Get Request Data"
+  - Makes HTTP calls to **Accommodation Service** (GET request for "Get Accommodation Data")
+  - Makes HTTP calls to **MOJ Services** via MOJ APIs
+  - Performs read/write operations with **Redis Cache**
+
+**Supported Features (MVP Complete):**
+- Calls are made concurrently and non-blocking (super fast)
+- Calls can be cached and reused, with different rules applied per call
+- Error handling supports partial results
+- Retry and timeout policies are supported per API call (new in Phase 2)
 
 **Status:** MVP complete.
 
@@ -98,6 +203,26 @@ This document outlines the development progress up to the March release. Develop
 ![Markdown Logo](rules future.png "Post February")
 
 ### Eligibility Rules Engine Phase 2
+
+**Diagram Description:**
+This diagram illustrates the event-driven Eligibility Rules Engine Phase 2 architecture. The flow shows:
+- **MOJEvents (SNS/SQS)**: Message queue that receives `ReadEvent` messages from SAS Service
+- **SAS Service** (Kotlin): Receives events from MOJEvents and invokes RulesDataContext
+- **RulesDataContext**: Component that orchestrates the rules processing flow
+  - Receives events from SAS Service ("OnEvent Pass to Rules Context")
+  - Invokes **Aggregator** to "Get Data that has been updated" when fresh data is needed
+  - Invokes **Eligibility Rules Engine** to "Run fresh rules" when data is updated
+  - Has read/write DB connection to **ReferenceDB**
+- **Aggregator**: Fetches fresh data from external sources when events require it
+- **Eligibility Rules Engine**: Processes rules and generates results
+- **ReferenceDB (PostgreSQL)**: Stores operational data and rules results in the **ReferenceData** table
+
+**Event Flow:**
+1. Events from MOJEvents queue are passed to RulesDataContext via SAS Service
+2. RulesDataContext generates reference data for the Rules Engine
+3. When events require fresh data, Aggregator fetches and updates records
+4. Updated data triggers Rules Engine to run and store results
+5. Results are stored in ReferenceDB (ReferenceData table with CRN and rules_results)
 
 **Target:** Event-driven architecture replacing on-demand pull technique.
 
@@ -126,6 +251,21 @@ The address phases represent a migration strategy from using Delius as the sourc
 
 ![Markdown Logo](address1.png "Address Phase 1")
 
+**Diagram Description:**
+This diagram shows the Phase 1 address architecture with minimal data storage:
+- **AccommodationDB (PostgreSQL)**: Database containing the Accommodation Table
+- **Accommodation Table**: Stores only `delius_address_key` (UUID) - no actual address data
+- **Read/Write Accommodation Service** (Kotlin): Service that manages accommodation data with DB connection to AccommodationDB
+- **Proposed Accommodation**: Component that invokes the Accommodation Service to "Get/Save Proposed Accommodation"
+- **Delius Address (search)**: External component (Delius API) that provides address search functionality
+  - Proposed Accommodation makes HTTP calls to search addresses via "Search Address" (SEARCH)
+
+**Data Flow:**
+1. Proposed Accommodation component searches for addresses via HTTP call to Delius Address (search) API
+2. When saving, Proposed Accommodation invokes Accommodation Service
+3. Accommodation Service stores only the `delius_address_key` reference in the database
+4. Actual address data is never stored locally; always fetched on-demand from Delius
+
 **Key Characteristics:**
 - **Data Storage**: Only stores the `delius_address_key` (UUID) in the Accommodation Table
 - **External Dependency**: Calls Delius Address (search) API to retrieve address data
@@ -151,6 +291,24 @@ The address phases represent a migration strategy from using Delius as the sourc
 ## Phase 2: Local Copy with Event-Driven Updates
 
 ![Markdown Logo](address2.png "Address Phase 2")
+
+**Diagram Description:**
+This diagram shows Phase 2 architecture with local address data storage and event-driven synchronization:
+- **AccommodationDB (PostgreSQL)**: Database containing the Accommodation Table
+- **Accommodation Table**: Now stores both `delius_address_key` (UUID) and `address_data` (VARCHAR) locally
+- **Read/Write Accommodation Service** (Kotlin): Service that manages accommodation data
+  - Has DB connection to AccommodationDB
+  - Publishes `ReadEvent` messages to MOJEvents (SNS/SQS) message queue
+- **MOJEvents (SNS/SQS)**: Message queue that receives `ReadEvent` messages from Accommodation Service
+- **Proposed Accommodation**: Component that still calls Delius API and invokes Accommodation Service
+- **Delius Address (search)**: External component (Delius API) still used for address searches
+
+**Data Flow:**
+1. Proposed Accommodation searches addresses via HTTP call to Delius Address (search) API
+2. Proposed Accommodation invokes Accommodation Service to get/save proposed accommodation
+3. Accommodation Service stores both the `delius_address_key` and `address_data` locally
+4. Accommodation Service publishes `ReadEvent` messages to MOJEvents when addresses are read
+5. When Delius address data changes, MOJEvents triggers updates to the local copy via `ReadEvent` consumption
 
 **Key Characteristics:**
 - **Data Storage**: Stores both `delius_address_key` and `address_data` (VARCHAR) locally
@@ -178,6 +336,25 @@ The address phases represent a migration strategy from using Delius as the sourc
 ## Phase 3: Master Data Source
 
 ![Markdown Logo](address3.png "Address Phase 3")
+
+**Diagram Description:**
+This diagram shows Phase 3 architecture where the system becomes the master data source for addresses:
+- **AccommodationDB (PostgreSQL)**: Database containing the Accommodation Table
+- **Accommodation Table**: Stores `accommodation_guid` (UUID) and `address_data` (VARCHAR)
+  - Note: Primary identifier changed from `delius_address_key` to `accommodation_guid`
+- **Read/Write Accommodation Service** (Kotlin): Service that manages accommodation data
+  - Has DB connection to AccommodationDB
+  - Publishes `AddressEvent` messages to MOJEvents when addresses are created or updated
+  - Consumes `ReadEvent` messages from MOJEvents
+- **MOJEvents (SNS/SQS)**: Message queue that handles both `AddressEvent` (published) and `ReadEvent` (consumed)
+- **Proposed Accommodation**: Component that invokes Accommodation Service to get/save proposed accommodation
+  - No longer makes HTTP calls to Delius Address (search) - that component has been removed
+
+**Key Changes from Phase 2:**
+- Delius Address (search) component and all HTTP calls to Delius have been removed
+- System is now the master for address data; no external dependency
+- Primary identifier changed from `delius_address_key` to `accommodation_guid`
+- Added `AddressEvent` publishing when addresses are created or updated
 
 **Key Characteristics:**
 - **Data Ownership**: Now the master for address data; no longer calls Delius
@@ -208,6 +385,24 @@ The address phases represent a migration strategy from using Delius as the sourc
 ## Phase 4: Data Migration and Cleansing
 
 ![Markdown Logo](address4.png "Address Phase 4")
+
+**Diagram Description:**
+This diagram shows Phase 4 architecture, which maintains the same structure as Phase 3 but acknowledges data quality issues:
+- **AccommodationDB (PostgreSQL)**: Database containing the Accommodation Table
+- **Accommodation Table**: Stores `accommodation_guid` (UUID) and `address_data` (VARCHAR)
+  - Contains migrated Delius data that has poor quality and needs cleansing
+- **Read/Write Accommodation Service** (Kotlin): Service that manages accommodation data
+  - Has DB connection to AccommodationDB
+  - Publishes `AddressEvent` messages to MOJEvents
+  - Consumes `ReadEvent` messages from MOJEvents
+- **MOJEvents (SNS/SQS)**: Message queue handling `AddressEvent` and `ReadEvent` messages
+- **Proposed Accommodation**: Component that invokes Accommodation Service
+
+**Key Context:**
+- Architecture is identical to Phase 3 (master data source)
+- The Accommodation Table contains migrated address data from Delius
+- Migrated data has known quality issues that need to be addressed
+- Data cleansing is identified as post-release work (system can go live with known issues)
 
 **Key Characteristics:**
 - **Data Quality**: Acknowledges that migrated Delius data has poor quality
@@ -263,6 +458,3 @@ The phases represent a clear migration path:
 - **Phase 3**: Decision to break away from Delius and become the master
 - **Phase 4**: Decision to accept data quality issues initially and address them post-release
 
-## Diagrams
-
-[Image URLs to be added later for each phase diagram]
