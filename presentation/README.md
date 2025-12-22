@@ -8,7 +8,7 @@ This document outlines the development progress up to the March release. Develop
 
 **Current State:**
 - Macro Tracker: Renders data
-- Micro Tracker: Renders minimal data, including referral histories (excluding STR and CRS)
+- Micro Tracker: Renders minimal data, including referral histories (excluding DTR and CRS)
 
 ### Aggregator Phase 1
 
